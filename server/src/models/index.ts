@@ -1,5 +1,7 @@
-import User from './User.model';
+import CareReceiver from './CareReceiver.model';
+import CareGiver from './CareGiver.model';
 
 export {
-    User
+    CareReceiver,
+    CareGiver
 }

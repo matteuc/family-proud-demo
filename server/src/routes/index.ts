@@ -1,7 +1,7 @@
 import { Router } from 'express'
 
 // Import Routes
-import userRoutes from "./user.routes"
+import userRoutes from "./careGiver.routes"
 
 const router = Router()
 
