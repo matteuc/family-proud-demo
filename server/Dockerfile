@@ -27,4 +27,4 @@ RUN yarn
 COPY . /usr/src/app/server
 
 # Start the app
-CMD ["yarn", "start"]
+CMD ["yarn", "start-prod"]
