@@ -1,11 +1,14 @@
 import { Router } from 'express'
 
 // Import Routes
-import userRoutes from "./user.routes"
+import careGiverRoutes from "./careGiver.routes"
+import careReceiverRoutes from "./careReceiver.routes"
 
 const router = Router()
 
 // All API Routes
-router.use('/users', userRoutes)
+router.use('/care-giver', careGiverRoutes)
+
+router.use('/care-receiver', careReceiverRoutes)
 
 export default router;

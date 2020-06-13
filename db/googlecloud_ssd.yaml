@@ -1,0 +1,9 @@
+# Configuration for Pod storage backed by SSD volumes
+# https://medium.com/devgorilla/how-to-deploy-mongodb-on-google-kubernetes-engine-gke-b099862fadbd
+kind: StorageClass
+apiVersion: storage.k8s.io/v1beta1
+metadata:
+  name: fast
+provisioner: kubernetes.io/gce-pd
+parameters:
+  type: pd-ssd
