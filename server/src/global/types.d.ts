@@ -1,6 +1,7 @@
 import {Document} from "mongoose"
 import { ParamsDictionary } from "express-serve-static-core"
 
+// Typing Request Handler Params, Response Body, Request Body, and Query
 interface IResourceRouteParams extends ParamsDictionary {
     id: string
 }
@@ -15,9 +16,10 @@ interface IResourceRequestBody<T> {
 
 interface IResourceQuery<T extends Document> {
     sort: keyof T,
-    order: 1 | -1
+    order: SortOrderOpts
 }
 
+// Typing Mongoose Models
 interface ICareGiver extends Document {
     firstName: string,
     lastName: string,
@@ -30,11 +32,14 @@ interface ICareReceiver extends Document {
     givers: Array<ICareGiver>
 }
 
+type SortOrderOpts = 1 | -1 | "asc" | "desc" | "ascending" | "descending"
+
 export {
     ICareReceiver,
     ICareGiver,
     IResourceRouteParams,
     IResourceResponseBody,
     IResourceRequestBody,
-    IResourceQuery
+    IResourceQuery,
+    SortOrderOpts
 }

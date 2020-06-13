@@ -1,28 +1,142 @@
-import { RequestHandler, Request, } from "express"
+import { RequestHandler } from "express"
+
 import { CareReceiver } from "../models"
+import { ApiError, ErrorTypes } from "../global"
+import { Error, Types, } from "mongoose"
 
 import {
     ICareReceiver,
     IResourceRouteParams,
     IResourceResponseBody,
     IResourceRequestBody,
-    IResourceQuery
+    IResourceQuery,
+    constructResourceResponse
 } from "../global"
+import { SortOrderOpts } from "../global/types"
 
-const postHandler: RequestHandler<any, IResourceResponseBody<ICareReceiver>, IResourceRequestBody<ICareReceiver>> = (req, res, next) => {
+const postHandler: RequestHandler<any, IResourceResponseBody<Array<ICareReceiver>>, IResourceRequestBody<ICareReceiver>> = (req, res, next) => {
+    const newCareReceiver = req.body.payload;
 
+    // TODO - If the payload implements the 'ICareReceiver' interface...
+    if(newCareReceiver as ICareReceiver) {
+        // Create the new CareReceiver document
+        CareReceiver.create(newCareReceiver, (err: Error, result: Array<ICareReceiver>) => {
+            if(err) next(err)
+
+            else res.json(constructResourceResponse(result));
+        })
+
+    } 
+    // Otherwise, throw an error
+    else return next(new ApiError(ErrorTypes.InvalidCreatePayload))
 }
 
-const getHandler: RequestHandler<IResourceRouteParams, IResourceResponseBody<Array<ICareReceiver>>, any, IResourceQuery<ICareReceiver>> = (req, res, next) => {
+const getHandler: RequestHandler<IResourceRouteParams, IResourceResponseBody<Array<ICareReceiver> | ICareReceiver>, any, IResourceQuery<ICareReceiver>> = (req, res, next) => {
+    const _id = req.params.id;
+    const { order, sort } = req.query;
 
+    // If an ID is specified...
+    if (_id) {
+        // Verify the specified ID is a valid ObjectID
+        if (!Types.ObjectId.isValid(_id)) next(new ApiError(ErrorTypes.InvalidDocumentId))
+
+        else {
+            // Query for a specific document
+            CareReceiver.findById(_id, (err: Error, result: ICareReceiver) => {
+                // If an error occurs pass it onto the default Express error handler
+                if (err) next(err)
+
+                else res.json(constructResourceResponse(result))
+
+            })
+        }
+
+    }
+
+    // Otherwise, query for all documents
+    else {
+        // Set the base query, which will execute regardless of order and sort options
+        let baseQuery = CareReceiver.find();
+
+        // If order or sort query params are provided...
+        if (order || sort) {
+
+            // TODO - Check if the params are valid
+            if ((order as SortOrderOpts) && (sort as keyof ICareReceiver)) baseQuery = baseQuery.sort({ [sort]: order });
+
+            // Otherwise, return an error back to the user
+            else return next(new ApiError(ErrorTypes.InvalidSortParameters))
+        }
+
+
+        baseQuery.exec((err: Error, result: Array<ICareReceiver>) => {
+            // If an error occurs pass it onto the default Express error handler
+            if (err) next(err)
+
+            else res.json(constructResourceResponse(result))
+
+        })
+    }
 }
 
 const deleteHandler: RequestHandler<IResourceRouteParams, IResourceResponseBody<ICareReceiver>> = (req, res, next) => {
+    const _id = req.params.id;
 
+    // If an ID is specified...
+    if (_id) {
+        // Verify the specified ID is a valid ObjectID
+        if (!Types.ObjectId.isValid(_id)) next(new ApiError(ErrorTypes.InvalidDocumentId))
+
+        else {
+            // Query for a specific document
+            CareReceiver.findOneAndDelete({ _id }, (err: Error, result) => {
+                // If an error occurs pass it onto the default Express error handler
+                if (err || !result) next(err)
+
+                else res.json(constructResourceResponse(result));
+
+            })
+        }
+
+    }
+    // If no ID was provided, throw an error
+    else return next(new ApiError(ErrorTypes.DocumentIdNotProvided))
 }
 
 const putHandler: RequestHandler<IResourceRouteParams, IResourceResponseBody<ICareReceiver>, IResourceRequestBody<Partial<ICareReceiver>>> = (req, res, next) => {
+    const _id = req.params.id;
+    const updates = req.body.payload;
 
+    // If an ID was provided...
+    if (_id) {
+
+        // Verify the specified ID is a valid ObjectID
+        if (!Types.ObjectId.isValid(_id)) next(new ApiError(ErrorTypes.InvalidDocumentId))
+
+        else {
+            // TODO - Verify the update object is of type Partial<T>
+            if (!(updates as Partial<ICareReceiver>)) next(new ApiError(ErrorTypes.InvalidUpdatePayload))
+
+            // Update the object
+            else {
+
+                CareReceiver.findByIdAndUpdate({ _id }, updates, { new: true }, (err: Error, result) => {
+                    // If an error occurs pass it onto the default Express error handler
+                    if (err || !result) next(err)
+
+                    else res.json(constructResourceResponse(result));
+                })
+
+            }
+
+
+        }
+
+
+    }
+
+    // If no ID was provided, throw an error
+    else return next(new ApiError(ErrorTypes.DocumentIdNotProvided))
 }
 
 export {

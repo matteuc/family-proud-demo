@@ -7,8 +7,9 @@ import compress from "compression";
 
 import config from "./config"
 import router from "./routes"
+import jsonErrorHandler from "./middleware/jsonErrorHandler";
 
-const app = express();
+const app = express()
 const server = http.createServer(app);
 
 app.use(express.static(path.join(__dirname, 'public')))
@@ -17,10 +18,14 @@ app.use(express.static(path.join(__dirname, 'public')))
 app.use(compress())
 app.use(cors(config.cors))
 app.use(express.json())
+app.use(compress())
 app.use(express.urlencoded({ 'extended': true }))
 
 // Establish Routes
 app.use('/api', router)
+
+// Custom Error Middleware to send any errors back as JSON
+app.use(jsonErrorHandler)
 
 // Connect to the MongoDB instance
 mongoose.connect(config.dbUri, err => {

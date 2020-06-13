@@ -1,6 +1,0 @@
-{
-  "dependencies": {
-    "express-serve-static-core": "^0.1.1",
-    "lodash": "^4.17.15"
-  }
-}

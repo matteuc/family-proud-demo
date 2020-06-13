@@ -12,9 +12,11 @@ router.get('/:id', CareGiverController.getHandler)
 router.post('/', CareGiverController.postHandler)
 
 // PUT Routes
+router.put('/', CareGiverController.putHandler)
 router.put('/:id', CareGiverController.putHandler)
 
 // DELETE Routes
+router.delete('/', CareGiverController.deleteHandler)
 router.delete('/:id', CareGiverController.deleteHandler)
 
 export default router
