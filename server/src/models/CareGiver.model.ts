@@ -1,5 +1,5 @@
 import mongoose, { Schema } from 'mongoose';
-import { ICareGiver } from "../global"
+import { GlobalTypes } from "../global"
 import CareReceiver from "./CareReceiver.model"
 
 // Define the schema
@@ -23,7 +23,7 @@ const careGiverSchema: Schema = new Schema(
 )
 
 // Save the schema as a model
-const CareGiver = mongoose.model<ICareGiver>('CareGiver', careGiverSchema);
+const CareGiver = mongoose.model<GlobalTypes.ICareGiver>('CareGiver', careGiverSchema);
 
 // Before deleting this document, remove the matching _id from all CareReceiver documents
 careGiverSchema.pre('remove', function (next) {

@@ -42,10 +42,10 @@ const errorMapping: ErrorInfo = {
 class ApiError extends Error {
     message: string;
     status: number;
-    constructor(public name: ErrorTypes) {
+    constructor(public name: ErrorTypes, ...otherMessages: string[]) {
         super(errorMapping[name].message);
 
-        this.message = errorMapping[name].message;
+        this.message = `${errorMapping[name].message} ${otherMessages.reduce((tm, m) => tm = `${m} ${tm}`, "")}`;
         this.status = errorMapping[name].status;
     }
 }

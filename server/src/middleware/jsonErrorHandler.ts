@@ -1,8 +1,8 @@
 import { Request, Response, NextFunction } from "express-serve-static-core";
-import { ApiError } from "../global";
+import { GlobalErrors } from "../global";
 import { ErrorRequestHandler } from "express";
 
-const jsonErrorHandler: ErrorRequestHandler = (err: ApiError, req: Request, res: Response, next: NextFunction): any => {
+const jsonErrorHandler: ErrorRequestHandler = (err: GlobalErrors.ApiError, req: Request, res: Response, next: NextFunction): any => {
     const status = err.status || 500
     const message = err.message || "Something went wrong!"
 

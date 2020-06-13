@@ -1,52 +1,67 @@
 import { RequestHandler } from "express"
 
 import { CareReceiver } from "../models"
-import { ApiError, ErrorTypes } from "../global"
-import { Error, Types, } from "mongoose"
+import { Error, Types } from "mongoose"
 
 import {
-    ICareReceiver,
-    IResourceRouteParams,
-    IResourceResponseBody,
-    IResourceRequestBody,
-    IResourceQuery,
-    constructResourceResponse
+    GlobalTypes,
+    GlobalErrors,
+    RunTypes,
+    Utils
 } from "../global"
-import { SortOrderOpts } from "../global/types"
+import { RTCareReceiverUpdate } from "../global/runtypes"
 
-const postHandler: RequestHandler<any, IResourceResponseBody<Array<ICareReceiver>>, IResourceRequestBody<ICareReceiver>> = (req, res, next) => {
-    const newCareReceiver = req.body.payload;
+const postHandler: RequestHandler<
+    any,
+    GlobalTypes.IResourceResponseBody<Array<GlobalTypes.TCareReceiver>>,
+    GlobalTypes.IResourceRequestBody<GlobalTypes.TCareReceiver>
+> = (req, res, next) => {
+    const newCareGiver = req.body.payload;
 
-    // TODO - If the payload implements the 'ICareReceiver' interface...
-    if(newCareReceiver as ICareReceiver) {
+    // If the payload conforms to the RTCareGiver type...
+    const rtValidation = RunTypes.RTCareGiver.validate(newCareGiver);
+    if (rtValidation.success) {
         // Create the new CareReceiver document
-        CareReceiver.create(newCareReceiver, (err: Error, result: Array<ICareReceiver>) => {
-            if(err) next(err)
+        CareReceiver.create(
+            newCareGiver,
+            (err: Error, result: Array<GlobalTypes.ICareGiver>
+            ) => {
+                if (err) next(err)
 
-            else res.json(constructResourceResponse(result));
-        })
+                else res.json(Utils.constructResourceResponse(result));
+            })
 
-    } 
+    }
     // Otherwise, throw an error
-    else return next(new ApiError(ErrorTypes.InvalidCreatePayload))
+    else return next(new GlobalErrors.ApiError(
+        GlobalErrors.ErrorTypes.InvalidCreatePayload,
+        Utils.constructValidationError(rtValidation)
+    ))
 }
 
-const getHandler: RequestHandler<IResourceRouteParams, IResourceResponseBody<Array<ICareReceiver> | ICareReceiver>, any, IResourceQuery<ICareReceiver>> = (req, res, next) => {
+const getHandler: RequestHandler<
+    GlobalTypes.IResourceRouteParams,
+    GlobalTypes.IResourceResponseBody<
+        Array<GlobalTypes.TCareReceiver> | GlobalTypes.ICareGiver
+    >,
+    any,
+    GlobalTypes.IResourceQuery<GlobalTypes.ICareGiver>
+> = (req, res, next) => {
     const _id = req.params.id;
     const { order, sort } = req.query;
 
     // If an ID is specified...
     if (_id) {
         // Verify the specified ID is a valid ObjectID
-        if (!Types.ObjectId.isValid(_id)) next(new ApiError(ErrorTypes.InvalidDocumentId))
+        if (!Types.ObjectId.isValid(_id)) next(new GlobalErrors.ApiError(GlobalErrors.ErrorTypes.InvalidDocumentId))
 
         else {
             // Query for a specific document
-            CareReceiver.findById(_id, (err: Error, result: ICareReceiver) => {
+            CareReceiver.findById(_id, (err: Error, result: GlobalTypes.ICareGiver) => {
                 // If an error occurs pass it onto the default Express error handler
                 if (err) next(err)
 
-                else res.json(constructResourceResponse(result))
+                else res.json(Utils.constructResourceResponse(result))
 
             })
         }
@@ -60,32 +75,43 @@ const getHandler: RequestHandler<IResourceRouteParams, IResourceResponseBody<Arr
 
         // If order or sort query params are provided...
         if (order || sort) {
+            // Check if the params are valid
+            const rtValidationOrder = RunTypes.RTSortOrderOpts.validate(order)
+            const rtValidationSort = RunTypes.RTCareGiverSortOpts.validate(sort)
 
-            // TODO - Check if the params are valid
-            if ((order as SortOrderOpts) && (sort as keyof ICareReceiver)) baseQuery = baseQuery.sort({ [sort]: order });
+            if (rtValidationOrder.success && rtValidationSort.success) baseQuery = baseQuery.sort({ [sort]: order });
 
             // Otherwise, return an error back to the user
-            else return next(new ApiError(ErrorTypes.InvalidSortParameters))
+            else {
+                const errorMessages = []
+
+                if (!rtValidationOrder.success) errorMessages.push(Utils.constructValidationError(rtValidationOrder, "order"))
+                if (!rtValidationSort.success) errorMessages.push(Utils.constructValidationError(rtValidationSort, "sort"))
+
+                return next(new GlobalErrors.ApiError(GlobalErrors.ErrorTypes.InvalidSortParameters, ...errorMessages))
+            }
         }
 
-
-        baseQuery.exec((err: Error, result: Array<ICareReceiver>) => {
+        baseQuery.exec((err: Error, result: Array<GlobalTypes.TCareReceiver>) => {
             // If an error occurs pass it onto the default Express error handler
             if (err) next(err)
 
-            else res.json(constructResourceResponse(result))
+            else res.json(Utils.constructResourceResponse(result))
 
         })
     }
 }
 
-const deleteHandler: RequestHandler<IResourceRouteParams, IResourceResponseBody<ICareReceiver>> = (req, res, next) => {
+const deleteHandler: RequestHandler<
+    GlobalTypes.IResourceRouteParams,
+    GlobalTypes.IResourceResponseBody<GlobalTypes.ICareGiver>
+> = (req, res, next) => {
     const _id = req.params.id;
 
     // If an ID is specified...
     if (_id) {
         // Verify the specified ID is a valid ObjectID
-        if (!Types.ObjectId.isValid(_id)) next(new ApiError(ErrorTypes.InvalidDocumentId))
+        if (!Types.ObjectId.isValid(_id)) next(new GlobalErrors.ApiError(GlobalErrors.ErrorTypes.InvalidDocumentId))
 
         else {
             // Query for a specific document
@@ -93,17 +119,21 @@ const deleteHandler: RequestHandler<IResourceRouteParams, IResourceResponseBody<
                 // If an error occurs pass it onto the default Express error handler
                 if (err || !result) next(err)
 
-                else res.json(constructResourceResponse(result));
+                else res.json(Utils.constructResourceResponse(result));
 
             })
         }
 
     }
     // If no ID was provided, throw an error
-    else return next(new ApiError(ErrorTypes.DocumentIdNotProvided))
+    else return next(new GlobalErrors.ApiError(GlobalErrors.ErrorTypes.DocumentIdNotProvided))
 }
 
-const putHandler: RequestHandler<IResourceRouteParams, IResourceResponseBody<ICareReceiver>, IResourceRequestBody<Partial<ICareReceiver>>> = (req, res, next) => {
+const putHandler: RequestHandler<
+    GlobalTypes.IResourceRouteParams,
+    GlobalTypes.IResourceResponseBody<GlobalTypes.ICareGiver>,
+    GlobalTypes.IResourceRequestBody<Partial<GlobalTypes.ICareGiver>>
+> = (req, res, next) => {
     const _id = req.params.id;
     const updates = req.body.payload;
 
@@ -111,11 +141,17 @@ const putHandler: RequestHandler<IResourceRouteParams, IResourceResponseBody<ICa
     if (_id) {
 
         // Verify the specified ID is a valid ObjectID
-        if (!Types.ObjectId.isValid(_id)) next(new ApiError(ErrorTypes.InvalidDocumentId))
+        if (!Types.ObjectId.isValid(_id)) next(new GlobalErrors.ApiError(GlobalErrors.ErrorTypes.InvalidDocumentId))
 
         else {
-            // TODO - Verify the update object is of type Partial<T>
-            if (!(updates as Partial<ICareReceiver>)) next(new ApiError(ErrorTypes.InvalidUpdatePayload))
+            // Verify the update object is of type Partial<T>
+            const rtValidation = RTCareReceiverUpdate.validate(updates)
+            if (!rtValidation.success) {
+                next(new GlobalErrors.ApiError(
+                    GlobalErrors.ErrorTypes.InvalidUpdatePayload,
+                    Utils.constructValidationError(rtValidation)
+                ))
+            }
 
             // Update the object
             else {
@@ -124,7 +160,7 @@ const putHandler: RequestHandler<IResourceRouteParams, IResourceResponseBody<ICa
                     // If an error occurs pass it onto the default Express error handler
                     if (err || !result) next(err)
 
-                    else res.json(constructResourceResponse(result));
+                    else res.json(Utils.constructResourceResponse(result));
                 })
 
             }
@@ -136,7 +172,7 @@ const putHandler: RequestHandler<IResourceRouteParams, IResourceResponseBody<ICa
     }
 
     // If no ID was provided, throw an error
-    else return next(new ApiError(ErrorTypes.DocumentIdNotProvided))
+    else return next(new GlobalErrors.ApiError(GlobalErrors.ErrorTypes.DocumentIdNotProvided))
 }
 
 export {
