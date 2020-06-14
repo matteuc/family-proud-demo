@@ -12,7 +12,7 @@ spec:
   - port: 27017
     protocol: TCP
     targetPort: 27017
-  selector:
+  selector: # Must match the labels of the pod's labels it exposes
     role: mongo
     run: mongo-service
   sessionAffinity: None
