@@ -9,12 +9,14 @@ spec:
  selector:  
     matchLabels:  # has to match .spec.template.metadata.labels
        role: mongo
-       environment: test 
+       environment: test
+       run: mongo-service
  template:
    metadata:
      labels:
        role: mongo
        environment: test
+       run: mongo-service
    # Pod Spec
    spec:
      terminationGracePeriodSeconds: 10
