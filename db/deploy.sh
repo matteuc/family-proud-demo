@@ -10,5 +10,5 @@ kubectl apply -f $dir_path/googlecloud_ssd.yaml
 kubectl apply -f $dir_path/mongo-statefulset.yaml
 
 # Create the Service to expose the pod in the Stateful Set
-kubectl apply -f $dir_path/mongo-pod-service.yaml
+kubectl apply -f $dir_path/mongo-service.yaml
 

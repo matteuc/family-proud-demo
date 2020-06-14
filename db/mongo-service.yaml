@@ -7,6 +7,7 @@ metadata:
     environment: test
     role: mongo
     statefulset.kubernetes.io/pod-name: mongo-0
+    run: mongo-service
   name: mongo-service
   namespace: default
 spec:
@@ -19,5 +20,6 @@ spec:
     environment: test
     role: mongo
     statefulset.kubernetes.io/pod-name: mongo-0
+    run: mongo-service
   sessionAffinity: None
   type: ClusterIP
