@@ -4,6 +4,7 @@ import mongoose from "mongoose"
 import cors from "cors";
 import path from "path";
 import compress from "compression";
+import helmet from "helmet"
 
 import config from "./config"
 import router from "./routes"
@@ -16,6 +17,7 @@ app.use(express.static(path.join(__dirname, 'public')))
 
 // Middleware
 app.use(compress())
+app.use(helmet());
 app.use(cors(config.cors))
 app.use(express.json())
 app.use(compress())

@@ -5,7 +5,7 @@ metadata:
  name: mongo
 spec:
  serviceName: "mongo"
- replicas: 3
+ replicas: 1
  selector:  
     matchLabels:  # has to match .spec.template.metadata.labels
        role: mongo
@@ -23,7 +23,9 @@ spec:
          image: mongo
          command: ["/bin/sh","-c"]
          args: 
-           - mongod --replSet rs0
+           - mongod --replSet rs0 --bind_ip_all
+           - mongo
+           - rs.initiate()
          ports:
            - containerPort: 27017
          volumeMounts:

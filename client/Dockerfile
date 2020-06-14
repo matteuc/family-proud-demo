@@ -1,30 +1,16 @@
-# https://hub.docker.com/_/node
-FROM node:10-alpine
-
-# Install Yarn (https://hub.docker.com/r/jfyne/node-alpine-yarn/dockerfile)
-RUN apk add --no-cache --virtual .build-deps \
-    ca-certificates \
-    wget \
-    tar && \
-    cd /usr/local/bin && \
-    wget https://yarnpkg.com/latest.tar.gz && \
-    tar zvxf latest.tar.gz && \
-    ln -s /usr/local/bin/dist/bin/yarn.js /usr/local/bin/yarn.js && \
-    apk del .build-deps
-
-# Create app directory
-RUN mkdir -p /usr/src/app/client
-WORKDIR /usr/src/app/client
-
-# Copy Dependency Files
-COPY package.json .
-COPY yarn.lock .
-
-# Install Dependencies
+# build environment
+FROM node:10-alpine as react-build
+WORKDIR /app
+COPY . ./
 RUN yarn
+RUN yarn build
 
-# Copy rest of code to current directory
-COPY . /usr/src/app/client
-
-# Start the app
-CMD ["yarn", "start"]
+# server environment
+FROM nginx:alpine
+COPY nginx.conf /etc/nginx/conf.d/configfile.template
+ENV PORT 8080
+ENV HOST 0.0.0.0
+RUN sh -c "envsubst '\$PORT'  < /etc/nginx/conf.d/configfile.template > /etc/nginx/conf.d/default.conf"
+COPY --from=react-build /app/build /usr/share/nginx/html
+EXPOSE 8080
+CMD ["nginx", "-g", "daemon off;"]

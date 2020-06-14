@@ -1,0 +1,30 @@
+apiVersion: v1
+kind: Service
+metadata:
+  creationTimestamp: "2020-06-14T08:39:04Z"
+  generateName: mongo-0-
+  labels:
+    controller-revision-hash: mongo-64bb499fcd
+    environment: test
+    role: mongo
+    statefulset.kubernetes.io/pod-name: mongo-0
+  name: mongo-0-wrpjr
+  namespace: default
+  resourceVersion: "97893"
+  selfLink: /api/v1/namespaces/default/services/mongo-0-wrpjr
+  uid: 81150ce1-ae1a-11ea-8e56-42010aa8017f
+spec:
+  clusterIP: 10.0.8.123
+  ports:
+  - port: 27017
+    protocol: TCP
+    targetPort: 27017
+  selector:
+    controller-revision-hash: mongo-64bb499fcd
+    environment: test
+    role: mongo
+    statefulset.kubernetes.io/pod-name: mongo-0
+  sessionAffinity: None
+  type: ClusterIP
+status:
+  loadBalancer: {}
