@@ -3,6 +3,7 @@ kind: Service
 metadata:
   generateName: mongo-0-
   labels:
+    role: mongo
     run: mongo-service
   name: mongo-service
   namespace: default
@@ -12,6 +13,7 @@ spec:
     protocol: TCP
     targetPort: 27017
   selector:
+    role: mongo
     run: mongo-service
   sessionAffinity: None
   type: ClusterIP

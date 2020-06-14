@@ -8,10 +8,12 @@ spec:
  replicas: 1
  selector:  
     matchLabels:  # has to match .spec.template.metadata.labels
+       role: mongo
        run: mongo-service
  template:
    metadata:
      labels:
+       role: mongo
        run: mongo-service
    # Pod Spec
    spec:
