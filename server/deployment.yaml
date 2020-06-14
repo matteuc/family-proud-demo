@@ -35,6 +35,7 @@ spec:
         image: gcr.io/family-proud-intern-demo/api
         imagePullPolicy: IfNotPresent
         resources: {}
+        name: api-1
         terminationMessagePath: /dev/termination-log
         terminationMessagePolicy: File
       dnsPolicy: ClusterFirst
