@@ -1,5 +1,10 @@
+# Retrieve file's directory path
+full_path=$(realpath $0)
+ 
+dir_path=$(dirname $full_path)
+
 # Build the API server image
-docker build --no-cache -t gcr.io/family-proud-intern-demo/api $PWD
+docker build --no-cache -t gcr.io/family-proud-intern-demo/api $dir_path
 
 # Push the created image to the GCR
 gcloud docker -- push gcr.io/family-proud-intern-demo/api
@@ -8,7 +13,7 @@ gcloud docker -- push gcr.io/family-proud-intern-demo/api
 kubectl create configmap api-config --from-literal=MONGODB_URL=mongodb://mongo-0-wrpjr/familyProud
 
 # Create the service to expose the API endpoint
-kubectl apply -f service.yaml
+kubectl apply -f $dir_path/service.yaml
 
 # Create the deployment
-kubectl apply -f deployment.yaml
+kubectl apply -f $dir_path/deployment.yaml
