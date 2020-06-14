@@ -1,15 +1,19 @@
-# A Headless Service that allows mapping of unique DNS addresses to any created pods
-# https://medium.com/devgorilla/how-to-deploy-mongodb-on-google-kubernetes-engine-gke-b099862fadbd
 apiVersion: v1
 kind: Service
 metadata:
- name: mongo
- labels:
-   name: mongo
+  generateName: mongo-0-
+  labels:
+    role: mongo
+    run: mongo-service
+  name: mongo-service
+  namespace: default
 spec:
- ports:
- - port: 27017
-   targetPort: 27017
- clusterIP: None
- selector:
-   role: mongo
+  ports:
+  - port: 27017
+    protocol: TCP
+    targetPort: 27017
+  selector: # Must match the labels of the pod's labels it exposes
+    role: mongo
+    run: mongo-service
+  sessionAffinity: None
+  type: ClusterIP
