@@ -3,10 +3,6 @@ kind: Service
 metadata:
   generateName: mongo-0-
   labels:
-    controller-revision-hash: mongo-64bb499fcd
-    environment: test
-    role: mongo
-    statefulset.kubernetes.io/pod-name: mongo-0
     run: mongo-service
   name: mongo-service
   namespace: default
@@ -16,10 +12,6 @@ spec:
     protocol: TCP
     targetPort: 27017
   selector:
-    controller-revision-hash: mongo-64bb499fcd
-    environment: test
-    role: mongo
-    statefulset.kubernetes.io/pod-name: mongo-0
     run: mongo-service
   sessionAffinity: None
   type: ClusterIP
