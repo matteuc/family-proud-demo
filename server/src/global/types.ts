@@ -45,6 +45,8 @@ export type {
     ICareReceiver,
     ICareGiver,
     TCareReceiver,
+    TCareReceiverUpdate,
+    TCareGiverUpdate,
     TCareGiver,
     TSortOrderOpts,
     IResourceRouteParams,
