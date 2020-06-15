@@ -2,7 +2,7 @@
 FROM node:10-alpine as react-build
 WORKDIR /app
 COPY . ./
-RUN yarn
+RUN yarn install --network-timeout 1000000
 RUN yarn build
 
 # server environment
