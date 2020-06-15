@@ -1,11 +1,16 @@
 import axios, { AxiosResponse } from "axios"
-import { TCareReceiver, TCareReceiverUpdate, IResourceResponseBody, IResourceQuery } from "../../../global/types";
+import { TCareReceiver, TCareReceiverUpdate, IResourceResponseBody, IResourceQuery, TNewCareReceiver } from "../../../global/types";
 
 export default class CareReceiverAPI {
     private base: string
 
     constructor(base: string) {
         this.base = `${base}/care-receiver`
+        this.delete = this.delete.bind(this)
+        this.create = this.create.bind(this)
+        this.getAll = this.getAll.bind(this)
+        this.update = this.update.bind(this)
+        this.getOne = this.getOne.bind(this)
     }
 
     async getOne(id: string): Promise<TCareReceiver | undefined> {
@@ -34,7 +39,7 @@ export default class CareReceiverAPI {
         }
     }
 
-    async create(document: TCareReceiver): Promise<TCareReceiver | undefined> {
+    async create(document: TNewCareReceiver): Promise<TCareReceiver | undefined> {
 
 
         try {

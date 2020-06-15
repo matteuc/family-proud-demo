@@ -6,9 +6,16 @@ export default class CareGiverAPI {
 
     constructor(base: string) {
         this.base = `${base}/care-giver`
+        this.delete = this.delete.bind(this)
+        this.create = this.create.bind(this)
+        this.getAll = this.getAll.bind(this)
+        this.update = this.update.bind(this)
+        this.getOne = this.getOne.bind(this)
+
     }
 
-    async getOne(id: string): Promise<TCareGiver | undefined> {
+    async getOne (id: string): Promise<TCareGiver | undefined> {
+
         try {
             const result: AxiosResponse<IResourceResponseBody<TCareGiver>> = await axios.get(`${this.base}/${id}`)
 

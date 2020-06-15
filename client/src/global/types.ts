@@ -53,14 +53,15 @@ export enum UpsertEntity {
     CareReceiver = "CareReceiver",
 }
 
-export enum UpsertType {
+export enum ActionType {
     Create = "Create",
     Update = "Update",
+    Delete = "Delete"
 }
 
 export type SpeedDialActions = {
     icon: React.ReactElement,
-    name: string, 
+    name: string,
     onClick: (event: React.MouseEvent<HTMLDivElement, MouseEvent>) => void
 }
 

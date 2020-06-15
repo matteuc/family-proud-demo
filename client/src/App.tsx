@@ -1,14 +1,15 @@
 import React from 'react';
 import './App.css';
 import API from './services/api';
-import { List, ListSubheader, ListItem, ListItemIcon, ListItemText, Typography, Slide, Dialog, AppBar, Toolbar, IconButton, Button, Divider, Card, TextField, Checkbox } from "@material-ui/core"
+import { List, ListSubheader, ListItem, ListItemIcon, ListItemText, Typography, Slide, Dialog, AppBar, Toolbar, IconButton, Button, Card, TextField, Checkbox } from "@material-ui/core"
 import { TransitionProps } from '@material-ui/core/transitions';
-
-import { AssignmentInd as CareReceiverIcon, SupervisedUserCircle as CareGiverIcon, Close as CloseIcon, DeleteOutlineOutlined, DeleteForeverOutlined, DeleteOutlined } from "@material-ui/icons";
+import { AssignmentInd as CareReceiverIcon, SupervisedUserCircle as CareGiverIcon, Close as CloseIcon, DeleteOutlined } from "@material-ui/icons";
 import { makeStyles, Theme, createStyles, useTheme } from "@material-ui/core/styles"
-import { SpeedDialIcon, SpeedDialAction, SpeedDial, Alert } from "@material-ui/lab"
+import { SpeedDialIcon, SpeedDialAction, SpeedDial } from "@material-ui/lab"
+import { useSnackbar } from 'notistack';
+import GithubCorner from 'react-github-corner';
 
-import { TCareGiver, TCareReceiver, UpsertEntity, UpsertType, SpeedDialActions, APIResult } from './global/types';
+import { TCareGiver, TCareReceiver, UpsertEntity, ActionType, SpeedDialActions } from './global/types';
 
 const useStyles = makeStyles((theme: Theme) =>
   createStyles({
@@ -43,9 +44,10 @@ const useStyles = makeStyles((theme: Theme) =>
       margin: `${theme.spacing(5)}px 0`
     },
     root: {
+      padding: "4rem 0",
       backgroundColor: theme.palette.background.default,
       height: "fit-content",
-      minHeight: "100vh",
+      minHeight: "calc(100vh - 8rem)",
       display: "flex"
     },
     content: {
@@ -58,9 +60,325 @@ const useStyles = makeStyles((theme: Theme) =>
     },
     textField: {
       margin: `${theme.spacing(3)}px 0`
+    },
+    deleteBtn: {
+      width: "100%",
+      margin: `${theme.spacing(3)}px 0`,
+      color: "white",
+      backgroundColor: theme.palette.error.main,
+      "&:hover": {
+        backgroundColor: theme.palette.error.dark,
+
+      }
+    },
+  }));
+
+const NoResultsBlock: React.FC<{
+  message: string,
+  icon: React.ReactElement
+}> = ({ message, icon }) => {
+
+  const classes = useStyles();
+
+  return (
+    <div className={classes.flexParent}>
+      <div className={classes.flexChild}>
+        <Typography>
+          {message}
+        </Typography>
+        <div className={classes.flexParent}>
+          <div className={classes.flexChild}>
+            <span className={classes.iconContainer}>
+              {icon}
+
+            </span>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  )
+}
+
+const initialForm = {
+  firstName: "",
+  lastName: "",
+  entityIds: [] as string[]
+}
+type FormData = typeof initialForm;
+
+const initialErrors = {
+  firstName: "",
+  lastName: ""
+}
+
+const Transition = React.forwardRef(function Transition(
+  props: TransitionProps & { children?: React.ReactElement },
+  ref: React.Ref<unknown>,
+) {
+  return <Slide direction="up" ref={ref} {...props} />;
+});
+
+const UpsertDialogContent: React.FC<{
+  open: boolean,
+  onClose: Function,
+  onSubmit: (action: ActionType, entity: UpsertEntity, form: FormData, id?: string) => void,
+  onDelete: (entity: UpsertEntity, id: string) => void,
+  action: ActionType,
+  entity: UpsertEntity,
+  id: string,
+  givers: Array<TCareGiver>,
+  receivers: Array<TCareReceiver>
+}> = ({
+  onClose,
+  action,
+  entity,
+  id,
+  onSubmit,
+  onDelete,
+  givers,
+  receivers
+}) => {
+
+    const theme = useTheme();
+    const classes = useStyles();
+
+    const [form, setForm] = React.useState<FormData>(initialForm)
+
+    // Form errors
+    const [errors, setErrors] = React.useState<typeof initialErrors>(initialErrors)
+
+    const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>, data: FormData) => {
+      const { name, value } = e.target;
+
+      if (name === "firstName" || name === "lastName") {
+        data[name] = value;
+        errors[name] = ""
+        setForm({ ...data })
+      }
+
     }
-  }),
-);
+
+    const handleSubmit = (action: ActionType, entity: UpsertEntity, form: FormData, id: string) => {
+
+      const validate = (form: FormData): boolean => {
+        const newErrors = initialErrors;
+        let errors = 0
+
+        if (!form.firstName.length) {
+          newErrors.firstName = "Please enter a first name";
+          errors++
+        }
+
+        if (!form.lastName.length) {
+          newErrors.lastName = "Please enter a last name";
+          errors++
+        }
+
+        setErrors({ ...newErrors })
+
+        if (errors) return false
+        else return true
+
+      }
+
+      if (validate(form)) onSubmit(action, entity, form, id)
+    }
+
+    const handleCheckChange = (e: React.ChangeEvent<HTMLInputElement>, id: string, data: FormData) => {
+
+      const { checked } = e.target;
+
+      console.log(checked)
+      if (!checked) {
+        const idx = data.entityIds.indexOf(id);
+        if (idx !== -1) data.entityIds.splice(idx, 1)
+      }
+      else data.entityIds.push(id)
+
+      setForm({ ...data })
+    }
+
+    React.useEffect(() => {
+      let currentEntity, entityIds
+
+      if (UpsertEntity.CareGiver === entity) {
+        currentEntity = givers.find((g) => g._id === id)
+        entityIds = currentEntity?.receivers || []
+      }
+      else {
+        currentEntity = receivers.find((g) => g._id === id)
+        entityIds = currentEntity?.givers || []
+      }
+
+      const data = currentEntity ? { firstName: currentEntity.firstName, lastName: currentEntity.lastName, entityIds } : initialForm
+
+      setForm({ ...data })
+    }, [])
+
+    return (
+      <>
+        <AppBar className={classes.appBar}>
+          <Toolbar>
+            <IconButton edge="start" color="inherit" onClick={onClose ? () => onClose() : undefined} aria-label="close">
+              <CloseIcon />
+            </IconButton>
+            <Typography
+              variant="h6"
+              className={classes.title}
+            >
+              {action} {entity}
+            </Typography>
+            <Button color="inherit" onClick={
+              () => handleSubmit(action, entity, form, id)
+            }>
+              {action}
+            </Button>
+          </Toolbar>
+        </AppBar>
+
+        <div className={classes.flexParent} style={{ padding: theme.spacing(3) }}>
+          <div className={classes.content} >
+
+            <TextField
+              className={classes.textField}
+              fullWidth
+              autoComplete={"off"}
+              label="First Name"
+              name="firstName"
+              onChange={(e) => handleInputChange(e, form)}
+              value={form.firstName}
+              error={Boolean(errors.firstName.length)}
+              helperText={errors.firstName}
+            />
+
+            <TextField
+              className={classes.textField}
+              fullWidth
+              autoComplete={"off"}
+              label="Last Name"
+              name="lastName"
+              onChange={(e) => handleInputChange(e, form)}
+              value={form.lastName}
+              error={Boolean(errors.lastName.length)}
+              helperText={errors.lastName}
+            />
+            <List
+              component="nav"
+              aria-labelledby="nested-list-subheader"
+              subheader={
+                <ListSubheader component="div" id="nested-list-subheader">
+                  {entity === UpsertEntity.CareReceiver ? "Care Givers" : "Care Receivers"}
+                </ListSubheader>
+              }
+            >
+
+              {
+                entity === UpsertEntity.CareReceiver ?
+                  <>
+                    {
+                      givers.length ?
+                        givers.map((g, idx) => (
+                          <ListItem
+                            key={g._id + idx}
+                            onClick={() => { }}
+                          >
+                            <ListItemIcon>
+                              <CareGiverIcon />
+                            </ListItemIcon>
+                            <ListItemText
+                              primary={`${g.firstName} ${g.lastName}`}
+                              secondary={`${g.receivers.length} receivers`}
+                            />
+                            <ListItemIcon>
+                              <Checkbox
+                                edge="start"
+                                color="default"
+                                checked={form.entityIds.includes(g._id)}
+                                onChange={(e) => handleCheckChange(e, g._id, form)}
+                                tabIndex={-1}
+                                disableRipple
+                              />
+                            </ListItemIcon>
+                          </ListItem>
+
+                        ))
+                        :
+                        <NoResultsBlock
+                          icon={<CareGiverIcon style={{ fontSize: "xxx-large" }} />} message={"No Care Givers Found"}
+                        />
+
+                    }
+                  </>
+
+                  :
+
+                  <>
+                    {
+                      receivers.length ?
+                        receivers.map((r, idx) => (
+                          <ListItem
+                            key={r._id + idx}
+                            onClick={() => { }}
+                          >
+                            <ListItemIcon>
+                              <CareReceiverIcon />
+                            </ListItemIcon>
+                            <ListItemText
+                              primary={`${r.firstName} ${r.lastName}`}
+                              secondary={`${r.givers.length} givers`}
+                            />
+                            <ListItemIcon>
+                              <Checkbox
+                                edge="start"
+                                checked={form.entityIds.includes(r._id)}
+                                tabIndex={-1}
+                                disableRipple
+                                onChange={(e) => handleCheckChange(e, r._id, form)}
+                                color="default"
+                              />
+                            </ListItemIcon>
+                          </ListItem>
+
+                        ))
+                        :
+                        <NoResultsBlock
+                          icon={<CareGiverIcon style={{ fontSize: "xxx-large" }} />} message={"No Care Receivers Found"}
+                        />
+
+                    }
+                  </>
+              }
+
+            </List>
+
+            {
+              action !== ActionType.Create ?
+                <Button
+                  className={
+                    classes.deleteBtn
+                  }
+                  color="default"
+                  onClick={() => onDelete(entity, id)}
+                >
+                  Delete&nbsp;<DeleteOutlined fontSize="small" />
+                </Button>
+
+                : ""
+            }
+
+          </div>
+        </div>
+
+      </>
+    )
+
+  }
+
+const MemoDialogContent = React.memo(UpsertDialogContent, (p, n) => {
+  if (p.open === n.open) return true
+  return false
+})
 
 const App: React.FC = () => {
   // Instantiate instances of both APIs
@@ -86,49 +404,46 @@ const App: React.FC = () => {
   const [currentId, setCurrentId] = React.useState<string>("")
 
   // Current action type
-  const [currentAction, setCurrentAction] = React.useState<UpsertType>(UpsertType.Create)
-
-  // Holds all current API results
-  const [results, setResults] = React.useState<Array<APIResult>>([])
-
-  // Indicates if the upsert form is complete
-  const [complete, setComplete] = React.useState(false)
+  const [currentAction, setCurrentAction] = React.useState<ActionType>(ActionType.Create)
 
   const classes = useStyles();
   const theme = useTheme();
+  const { enqueueSnackbar } = useSnackbar();
 
   // Handles the error of an API call 
   const handleError = (
     ad: string, // Action Description
   ) => {
 
-    results.push({
-      id: (new Date()).toDateString(),
-      message: ad
+    enqueueSnackbar(ad, {
+      autoHideDuration: 3000,
+      variant: "error"
     })
-
-    setResults([...results])
 
   }
 
-  // Handles removing an error from the results list
-  const removeError = (
-    id: string, // Action ID
+  const handleSuccess = (
+    ad: string, // Action Description
   ) => {
-    setResults([...results.filter((r) => r.id !== id)])
+
+    enqueueSnackbar(ad, {
+      autoHideDuration: 3000,
+      variant: "success"
+    })
 
   }
 
   // Opens the update modal when an entity is clicked
   const openUpsertDialog = (
     ue: UpsertEntity, // Entity that is getting upserted
-    ut: UpsertType, // Action Type
+    ut: ActionType, // Action Type
     id: string = "" // ID of the entity
   ) => {
     setDialOpen(false)
     setCurrentEntity(ue)
     setCurrentAction(ut)
     setCurrentId(id);
+
     setDialogOpen(true)
   }
 
@@ -138,12 +453,86 @@ const App: React.FC = () => {
   }
 
   // Return the corresponding action for the upsert dialog
-  const getAction = (
-    ut: UpsertType, // Action Type
+  const handleSubmit = async (
+    ut: ActionType, // Action Type
     ue: UpsertEntity, // Entity that is getting upserted
+    data: FormData, // Form data
+    id: string = ""
   ) => {
 
+    if (ue !== UpsertEntity.CareGiver && ue !== UpsertEntity.CareReceiver) return;
 
+    let f: Function;
+
+    const { firstName, lastName, entityIds } = data;
+
+    const cgPayload = {
+      firstName,
+      lastName,
+      receivers: entityIds
+    }
+
+    const crPayload = {
+      firstName,
+      lastName,
+      givers: entityIds
+    }
+
+    if (ut === ActionType.Create && ue === UpsertEntity.CareGiver)
+      f = async () => {
+        return await cgApi.create(cgPayload)
+      }
+
+    else if (ut === ActionType.Create && ue === UpsertEntity.CareReceiver)
+      f = async () => {
+        return await crApi.create(crPayload)
+      }
+
+    else if (ut === ActionType.Update && ue === UpsertEntity.CareGiver)
+      f = async () => {
+        return await cgApi.update(id, cgPayload)
+      }
+
+    else if (ut === ActionType.Update && ue === UpsertEntity.CareReceiver)
+      f = async () => {
+        return await crApi.update(id, crPayload)
+      }
+    else f = async () => { }
+
+    closeUpsertDialog()
+
+    const res = await f()
+
+    if (!res) {
+      handleError(`An error occurred when trying to ${ut.toLowerCase()} the ${ue}`)
+      return;
+    } else {
+      handleSuccess(`The ${ue.toLowerCase()} was successfully ${ut.toLowerCase()}d`)
+      reload()
+    }
+
+  }
+
+  const handleDelete = async (
+    ue: UpsertEntity, // Entity that is getting upserted
+    id: string = ""
+  ) => {
+
+    closeUpsertDialog()
+
+    let f: Function;
+
+    if (ue === UpsertEntity.CareGiver) f = cgApi.delete
+    else f = crApi.delete
+
+    const res = await f(id)
+
+    if (!res) {
+      handleError(`An error occurred when trying to delete the ${ue}`)
+    } else {
+      handleSuccess(`The ${ue.toLowerCase()} was successfully deleted`)
+      reload()
+    }
 
   }
 
@@ -152,87 +541,72 @@ const App: React.FC = () => {
     {
       icon: <CareReceiverIcon />,
       name: 'Add a New Care Receiver',
-      onClick: () => openUpsertDialog(UpsertEntity.CareReceiver, UpsertType.Create)
+      onClick: () => openUpsertDialog(UpsertEntity.CareReceiver, ActionType.Create)
     },
     {
       icon: <CareGiverIcon />,
       name: 'Add a New Care Giver',
-      onClick: () => openUpsertDialog(UpsertEntity.CareGiver, UpsertType.Create)
+      onClick: () => openUpsertDialog(UpsertEntity.CareGiver, ActionType.Create)
     }
   ];
 
-  React.useEffect(() => {
-    const fetch = async () => {
-      const gData = await cgApi.getAll();
+  const fetch = async () => {
+    const gData = await cgApi.getAll();
 
-      if (!gData) handleError("An error occurred when retrieving care givers")
-      else setGivers(gData)
-
-      const rData = await crApi.getAll();
-
-      if (!rData) handleError("An error occurred when retrieving care receivers")
-      else setReceivers(rData)
-
-
+    if (!gData) handleError("An error occurred when retrieving care givers")
+    else {
+      handleSuccess("Care givers successfully retrieved!")
+      setGivers(gData)
     }
 
+    const rData = await crApi.getAll();
+
+    if (!rData) handleError("An error occurred when retrieving care receivers")
+    else {
+      handleSuccess("Care receivers successfully retrieved!")
+      setReceivers(rData)
+    }
+
+
+  }
+
+  const reload = async () => {
+    const gData = await cgApi.getAll();
+
+    if (!gData) handleError("An error occurred when retrieving care givers")
+    else {
+      setGivers(gData)
+    }
+
+    const rData = await crApi.getAll();
+
+    if (!rData) handleError("An error occurred when retrieving care receivers")
+    else {
+      setReceivers(rData)
+    }
+
+
+  }
+
+  React.useEffect(() => {
+
     fetch()
+
   }, [])
-
-  const NoResultsBlock: React.FC<{
-    message: string,
-    icon: React.ReactElement
-  }> = ({ message, icon }) => (
-    <div className={classes.flexParent}>
-      <div className={classes.flexChild}>
-        <Typography>
-          {message}
-        </Typography>
-        <div className={classes.flexParent}>
-          <div className={classes.flexChild}>
-            <span className={classes.iconContainer}>
-              {icon}
-
-            </span>
-          </div>
-        </div>
-
-      </div>
-    </div>
-  )
-
-  const Transition = React.forwardRef(function Transition(
-    props: TransitionProps & { children?: React.ReactElement },
-    ref: React.Ref<unknown>,
-  ) {
-    return <Slide direction="up" ref={ref} {...props} />;
-  });
 
   return (
     <div className={classes.root}>
+      <GithubCorner bannerColor="#003a77" href="https://github.com/matteuc/family-proud-demo"/>
+      
       <div className={classes.content}>
-
-        {
-          results.map((r) => (
-            <Alert
-              onClose={() => removeError(r.id)}
-              style={{ margin: "1rem 0" }}
-              key={r.id}
-              severity="error"
-            >
-              {r.message}
-            </Alert>
-          ))
-        }
-
+        {/* Care Givers Card */}
         <Card elevation={5} className={classes.card}>
           <List
             component="nav"
-            aria-labelledby="nested-list-subheader"
             subheader={
-              <ListSubheader component="div" id="nested-list-subheader">
+              <ListSubheader component="div">
                 Care Givers
-        </ListSubheader>
+              </ListSubheader>
             }
           >
             {
@@ -241,7 +615,7 @@ const App: React.FC = () => {
                   <ListItem
                     key={g._id + idx}
                     button
-                    onClick={() => openUpsertDialog(UpsertEntity.CareGiver, UpsertType.Update, g._id)}
+                    onClick={() => openUpsertDialog(UpsertEntity.CareGiver, ActionType.Update, g._id)}
                   >
                     <ListItemIcon>
                       <CareGiverIcon />
@@ -263,12 +637,12 @@ const App: React.FC = () => {
           </List>
         </Card>
 
+        {/* Care Receivers Card */}
         <Card elevation={5} className={classes.card}>
           <List
             component="nav"
-            aria-labelledby="nested-list-subheader"
             subheader={
-              <ListSubheader component="div" id="nested-list-subheader">
+              <ListSubheader component="div">
                 Care Receivers
         </ListSubheader>
             }
@@ -279,7 +653,7 @@ const App: React.FC = () => {
                   <ListItem
                     key={r._id + idx}
                     button
-                    onClick={() => openUpsertDialog(UpsertEntity.CareReceiver, UpsertType.Update, r._id)}
+                    onClick={() => openUpsertDialog(UpsertEntity.CareReceiver, ActionType.Update, r._id)}
                   >
                     <ListItemIcon>
                       <CareReceiverIcon />
@@ -301,6 +675,7 @@ const App: React.FC = () => {
           </List>
         </Card>
 
+        {/* Create Entity Speed Dial */}
         <SpeedDial
           ariaLabel="SpeedDial example"
           className={classes.speedDial}
@@ -325,157 +700,23 @@ const App: React.FC = () => {
           open={dialogOpen}
           onClose={closeUpsertDialog}
           TransitionComponent={Transition}
-          style={{
-            // Fix strange overlay issue with MUI dialogs
-            display: !dialogOpen ? "none" : ""
-          }}
         >
-          <AppBar className={classes.appBar}>
-            <Toolbar>
-              <IconButton edge="start" color="inherit" onClick={closeUpsertDialog} aria-label="close">
-                <CloseIcon />
-              </IconButton>
-              <Typography
-                variant="h6"
-                className={classes.title}
-              >
-                {currentAction} {currentEntity}
-              </Typography>
-              <Button color="inherit" onClick={
-                complete ?
-                  () => getAction(currentAction, currentEntity)
-                  : () => { }
-              }>
-                {currentAction}
-              </Button>
-            </Toolbar>
-          </AppBar>
-
-          <div className={classes.flexParent} style={{ padding: theme.spacing(3) }}>
-            <div className={classes.content} >
-
-              <TextField
-                className={classes.textField}
-                fullWidth
-                label="First Name"
-                defaultValue="foo"
-              />
-
-              <TextField
-                className={classes.textField}
-                fullWidth
-                label="Last Name"
-                defaultValue="foo"
-              />
-              <List
-                component="nav"
-                aria-labelledby="nested-list-subheader"
-                subheader={
-                  <ListSubheader component="div" id="nested-list-subheader">
-                    {currentEntity === UpsertEntity.CareReceiver ?"Care Givers" : "Care Receivers"}
-              </ListSubheader>
-                }
-              >
-
-                {
-                  currentEntity === UpsertEntity.CareReceiver ?
-                    <>
-                      {
-                        givers.length ?
-                          givers.map((g, idx) => (
-                            <ListItem
-                              button
-                              key={g._id + idx}
-                              onClick={() => { }}
-                            >
-                              <ListItemIcon>
-                                <CareGiverIcon />
-                              </ListItemIcon>
-                              <ListItemText
-                                primary={`${g.firstName} ${g.lastName}`}
-                                secondary={`${g.receivers.length} receivers`}
-                              />
-                              <ListItemIcon>
-                                <Checkbox
-                                  edge="start"
-                                  color="default"
-                                  checked={g.receivers.includes(currentId)}
-                                  tabIndex={-1}
-                                  disableRipple
-                                />
-                              </ListItemIcon>
-                            </ListItem>
-
-                          ))
-                          :
-                          <NoResultsBlock
-                            icon={<CareGiverIcon style={{ fontSize: "xxx-large" }} />} message={"No Care Givers Found"}
-                          />
-
-                      }
-                    </>
-
-                    :
-
-                    <>
-                      {
-                        receivers.length ?
-                          receivers.map((r, idx) => (
-                            <ListItem
-                              key={r._id + idx}
-                              onClick={() => { }}
-                            >
-                              <ListItemIcon>
-                                <CareReceiverIcon />
-                              </ListItemIcon>
-                              <ListItemText
-                                primary={`${r.firstName} ${r.lastName}`}
-                                secondary={`${r.givers.length} givers`}
-                              />
-                              <ListItemIcon>
-                                <Checkbox
-                                  edge="start"
-                                  checked={r.givers.includes(currentId)}
-                                  tabIndex={-1}
-                                  disableRipple
-                                  color="default"
-                                />
-                              </ListItemIcon>
-                            </ListItem>
-
-                          ))
-                          :
-                          <NoResultsBlock
-                            icon={<CareGiverIcon style={{ fontSize: "xxx-large" }} />} message={"No Care Receivers Found"}
-                          />
-
-                      }
-                    </>
-                }
-
-              </List>
-
-              <Button
-                style={{ 
-                  width: "100%", 
-                  margin: `${theme.spacing(3)}px 0`,
-                  color: "white",
-                  backgroundColor: "#909090" 
-                
-                }}
-                color="default"
-                onClick={() => console.log(currentId)}
-              >
-                <DeleteOutlined /> Delete
-              </Button>
-
-            </div>
-          </div>
-
+          {/* Upsert Dialog */}
+          <MemoDialogContent
+            onClose={closeUpsertDialog}
+            onSubmit={handleSubmit}
+            onDelete={handleDelete}
+            open={dialogOpen}
+            action={currentAction}
+            entity={currentEntity}
+            id={currentId}
+            givers={givers}
+            receivers={receivers}
+          />
         </Dialog>
       </div>
 
-    </div>
+    </div >
   );
 }
 
