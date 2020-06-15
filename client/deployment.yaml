@@ -32,7 +32,7 @@ spec:
               name: web-config
               # Specify the key associated with the value
               key: REACT_APP_API_URL
-        image: gcr.io/family-proud-demo/web
+        image: gcr.io/family-proud-demo/web:latest
         imagePullPolicy: IfNotPresent
         resources: {}
         name: web-1
