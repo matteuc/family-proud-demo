@@ -25,7 +25,7 @@ spec:
     spec:
       containers:
       - env:
-        - name: API_URL
+        - name: REACT_APP_API_URL
           valueFrom:
             configMapKeyRef:
               # The ConfigMap containing the value you want to assign to SPECIAL_LEVEL_KEY
