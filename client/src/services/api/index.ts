@@ -1,7 +1,7 @@
 import CareGiverAPI from "./caregiver"
 import CareReceiverAPI from "./carereceiver"
 
-const DOMAIN = process.env.REACT_APP_API_URL;
+const DOMAIN = process.env.REACT_APP_API_URL || "http://localhost:3030";
 
 if (!DOMAIN) throw new Error("No API URL provided.")
 
