@@ -1,12 +1,21 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
-import './index.css';
+import dotenv from 'dotenv'
+import { createMuiTheme, ThemeProvider } from '@material-ui/core/styles';
+import { SnackbarProvider } from 'notistack';
+
 import App from './App';
 import * as serviceWorker from './serviceWorker';
 
+dotenv.config()
+
 ReactDOM.render(
   <React.StrictMode>
-    <App />
+    <ThemeProvider theme={createMuiTheme({ palette: { type: 'light' } })}>
+      <SnackbarProvider maxSnack={3}>
+        <App />
+      </SnackbarProvider>
+    </ThemeProvider>
   </React.StrictMode>,
   document.getElementById('root')
 );

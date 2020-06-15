@@ -14,6 +14,8 @@ const RTCareGiverUpdate = Partial({
 })
 
 const RTCareReceiverUpdate = Partial({
+    firstName: String,
+    lastName: String,
     givers: Array(String)
 });
 
