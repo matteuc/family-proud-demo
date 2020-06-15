@@ -4,10 +4,10 @@ full_path=$(realpath $0)
 dir_path=$(dirname $full_path)
 
 # Build the API server image
-docker build --no-cache -t gcr.io/family-proud-intern-demo/web $dir_path
+docker build --no-cache -t gcr.io/family-proud-demo/web $dir_path
 
 # Push the created image to the GCR
-gcloud docker -- push gcr.io/family-proud-intern-demo/web
+gcloud docker -- push gcr.io/family-proud-demo/web
 
 # Create a config to hold environmental variables, specifically the URI for MongoDB
 kubectl create configmap web-config --from-literal=API_URL=http://api-service
