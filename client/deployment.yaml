@@ -24,7 +24,7 @@ spec:
         app: web
     spec:
       containers:
-      - image: gcr.io/PROJECT_ID_PLACEHOLDER/web:latest
+      - image: gcr.io/PROJECT_ID_PLACEHOLDER/web
         imagePullPolicy: IfNotPresent
         resources: {}
         name: web-1
