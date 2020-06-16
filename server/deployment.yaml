@@ -32,7 +32,7 @@ spec:
               name: api-config
               # Specify the key associated with the value
               key: MONGODB_URL
-        image: gcr.io/family-proud-demo/api:latest
+        image: gcr.io/PROJECT_ID_PLACEHOLDER/api
         imagePullPolicy: IfNotPresent
         resources: {}
         name: api-1

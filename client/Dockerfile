@@ -1,6 +1,6 @@
 # build environment
-ARG API_URL
 FROM node:10-alpine as react-build
+ARG API_URL
 WORKDIR /app
 COPY . ./
 RUN yarn install --network-timeout 1000000
