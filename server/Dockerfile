@@ -2,6 +2,7 @@
 FROM node:10-alpine
 
 # Install Yarn (https://hub.docker.com/r/jfyne/node-alpine-yarn/dockerfile)
+# May not be necessary
 RUN apk add --no-cache --virtual .build-deps \
     ca-certificates \
     wget \

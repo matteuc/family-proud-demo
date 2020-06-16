@@ -24,15 +24,7 @@ spec:
         app: web
     spec:
       containers:
-      - env:
-        - name: REACT_APP_API_URL
-          valueFrom:
-            configMapKeyRef:
-              # The ConfigMap containing the value you want to assign to SPECIAL_LEVEL_KEY
-              name: web-config
-              # Specify the key associated with the value
-              key: REACT_APP_API_URL
-        image: gcr.io/family-proud-demo/web:latest
+      - image: gcr.io/family-proud-demo/web:latest
         imagePullPolicy: IfNotPresent
         resources: {}
         name: web-1
