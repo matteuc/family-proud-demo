@@ -4,7 +4,7 @@ kind: StatefulSet
 metadata:
  name: mongo
 spec:
- serviceName: "mongo"
+ serviceName: mongo-service
  replicas: 1
  selector:  
     matchLabels:  # has to match .spec.template.metadata.labels
@@ -23,13 +23,18 @@ spec:
          image: mongo
          command: ["/bin/sh","-c"]
          args: 
-           - mongod --replSet rs0 --bind_ip_all && mongo 
-           - mongo --eval 'rs.initiate()'
+        #    - mongod --replSet rs0 --bind_ip_all && mongo --eval 'rs.initiate()' 
+           - mongod --bind_ip_all
          ports:
            - containerPort: 27017
          volumeMounts:
            - name: mongo-persistent-storage
              mountPath: /data/db
+       - name: mongo-sidecar
+         image: cvallance/mongo-k8s-sidecar
+         env:
+         - name: MONGO_SIDECAR_POD_LABELS
+           value: "role=mongo,run=mongo-service"
  # Storage Volumne Configuration for each pod
  volumeClaimTemplates:
  - metadata:
