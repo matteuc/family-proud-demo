@@ -6,6 +6,8 @@ full_path=$(realpath $0)
  
 dir_path=$(dirname $full_path)
 
+# Retrieve Credentials to take actions upon the cluster
+gcloud container clusters get-credentials family-proud-cluster --zone us-west2-a --project $1
 
 # Build the API server image
 docker build --no-cache -t gcr.io/$1/api:latest $dir_path
