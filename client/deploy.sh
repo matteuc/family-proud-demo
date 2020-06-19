@@ -6,6 +6,9 @@ full_path=$(realpath $0)
  
 dir_path=$(dirname $full_path)
 
+# Retrieve Credentials to take actions upon the cluster
+gcloud container clusters get-credentials family-proud-cluster --zone us-west2-a --project $1
+
 PORT=$(kubectl get services api-service -o json | jq -r '.spec.ports[0].port')
 IP=$(kubectl get services api-service -o json | jq -r '.status.loadBalancer.ingress[0].ip')
 

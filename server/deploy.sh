@@ -6,15 +6,18 @@ full_path=$(realpath $0)
  
 dir_path=$(dirname $full_path)
 
+# Retrieve Credentials to take actions upon the cluster
+gcloud container clusters get-credentials family-proud-cluster --zone us-west2-a --project $1
 
 # Build the API server image
-docker build --no-cache -t gcr.io/$1/api $dir_path
+docker build --no-cache -t gcr.io/$1/api:latest $dir_path
 
 # Push the created image to the GCR
-gcloud docker -- push gcr.io/$1/api
+gcloud docker -- push gcr.io/$1/api:latest
 
 # Create a config to hold environmental variables, specifically the URI for MongoDB
-kubectl create configmap api-config --from-literal=MONGODB_URL=mongodb://mongo-service/familyProud?replicaSet=rs0
+# kubectl create configmap api-config --from-literal=MONGODB_URL=mongodb://mongo-service/familyProud?replicaSet=rs0
+kubectl create configmap api-config --from-literal=MONGODB_URL=mongodb://mongo-service/familyProud
 
 # Replace Dockerfile with the correct image from your project
 sed -i "s/PROJECT_ID_PLACEHOLDER/$1/g" $dir_path/deployment.yaml

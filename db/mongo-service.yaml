@@ -1,19 +1,36 @@
+# apiVersion: v1
+# kind: Service
+# metadata:
+#   generateName: mongo-0-
+#   labels:
+#     role: mongo
+#     run: mongo-service
+#   name: mongo-service
+#   namespace: default
+# spec:
+#   ports:
+#   - port: 27017
+#     protocol: TCP
+#     targetPort: 27017
+#   selector: # Must match the labels of the pod's labels it exposes
+#     role: mongo
+#     run: mongo-service
+#   sessionAffinity: None
+#   type: ClusterIP
+#   ---
 apiVersion: v1
 kind: Service
 metadata:
-  generateName: mongo-0-
-  labels:
+ name: mongo-service
+ labels:
     role: mongo
     run: mongo-service
-  name: mongo-service
-  namespace: default
 spec:
-  ports:
-  - port: 27017
-    protocol: TCP
-    targetPort: 27017
-  selector: # Must match the labels of the pod's labels it exposes
+ ports:
+ - port: 27017
+   targetPort: 27017
+ clusterIP: None
+ selector:
     role: mongo
     run: mongo-service
-  sessionAffinity: None
-  type: ClusterIP
+   
